@@ -1,0 +1,67 @@
+/* estilo.css: o visual do app (pronto)
+   Ele deixa bonito qualquer h1, p, input, select, button e lista. */
+
+:root { --cor: #2e7d32; }   /* cor principal do app */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 0 16px 24px;
+  font-family: Arial, sans-serif;
+  background: #f2f2f2;
+  color: #222;
+}
+
+h1 {
+  margin: 0 -16px;
+  padding: 22px 16px 6px;
+  background: var(--cor);
+  color: white;
+  text-align: center;
+  font-size: 26px;
+}
+
+h1 + p {
+  margin: 0 -16px 18px;
+  padding: 0 16px 18px;
+  background: var(--cor);
+  color: white;
+  text-align: center;
+}
+
+input, select, button {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-family: inherit;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  background: white;
+}
+
+input:focus, select:focus { outline: none; border-color: var(--cor); }
+
+button {
+  background: var(--cor);
+  color: white;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:active { transform: scale(0.98); }
+
+ul { list-style: none; padding: 0; margin: 18px 0 0; }
+
+ul:empty::before { content: "Nenhuma reserva ainda"; color: #999; }
+
+li {
+  background: white;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  border-left: 6px solid var(--cor);
+}
