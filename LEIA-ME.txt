@@ -1,0 +1,56 @@
+RESERVAS DO VILSON — como usar no dia
+=====================================
+
+ANTES (uma vez só, ~5 min) — criar o banco no Firebase
+1. Entre em console.firebase.google.com com sua conta Google
+2. "Criar projeto" (pode desativar o Google Analytics)
+3. Menu Criação/Build > Realtime Database > Criar banco de dados
+   - Local: Estados Unidos (us-central1)
+   - Modo: bloqueado (as regras vêm no passo 4)
+4. Aba "Regras": apague tudo, cole o conteúdo de regras-firebase.json, clique em Publicar
+5. Na aba "Dados", copie a URL do topo (ex.: https://arena-vilson-abc12-default-rtdb.firebaseio.com)
+   e acrescente /arena-vilson no fim
+
+CONFIGURAR OS ARQUIVOS
+6-7. Já configurado com: https://tonezacascaes-efe85-default-rtdb.firebaseio.com/arena-vilson
+
+TESTE NA ESCOLA (importante)
+8. Num computador do laboratório, abra no navegador:
+   https://tonezacascaes-efe85-default-rtdb.firebaseio.com/arena-vilson/reservas.json
+   Se aparecer "null" ou uma lista, a rede da escola libera o Firebase.
+
+NA AULA (code-along: você digita no projetor, eles acompanham)
+- Alunos: dois cliques no reservas-vilson.html (pendrive ou pasta compartilhada)
+- Você: o laboratório aberto no projetor, programando junto com eles
+- No fim (passo 4), troque o projetor para o painel.html
+- Entre turmas: botão "Apagar banco (nova turma)" no painel
+
+ROTEIRO (~15 min). O index.html já começa com o esqueleto: doctype, head com o link do estilo.css,
+o <script src="banco.js"> e o const API (endereço da API), e o body vazio.
+  Passo 1 · HTML (2 min)  <h1> e <p> dentro do <body>
+  Passo 2 · HTML (4 min)  campos nome, quadra, data, horário, botão e <ul id="lista">
+  Passo 3 · JS   (4 min)  <script> antes do </body> com a função reservar() e
+                          await fetch(API, "POST", reserva)
+                          → os nomes já começam a aparecer no projetor
+  Passo 4 · JS   (5 min)  carregar() com  let lista = await fetch(API, "GET")
+                          + for + setInterval → a lista de TODOS aparece no app
+  Bônus e desafio: para as duplas rápidas (exigir nome/data; bloquear horário ocupado)
+O banco.js sobrescreve o fetch: fetch(url, "VERBO", dados). A aba banco.js mostra o fetch de verdade por dentro.
+
+O EDITOR (o mesmo do JSFiddle: CodeMirror, embutido, funciona sem internet)
+- Cores no código, fecha a tag sozinho ao digitar <h1>, marca pares de { } ( ) e de tags,
+  sugere tags ao digitar "<" e atributos ao dar espaço dentro da tag (Ctrl+Espaço também).
+- Erros aparecem enquanto eles digitam: ícone vermelho/amarelo na linha (passe o mouse para ler)
+  e a lista "Problemas" embaixo do editor (clique para ir até a linha).
+  Pega: tag não fechada ou fechada errado, tag/atributo com nome errado (<buton>, onclik, tipe),
+  aspas abertas, id repetido ou que não existe, função do onclick que não existe,
+  nome do estilo.css/banco.js errado, falta do banco.js, e erros de JavaScript
+  (vírgula/chave/parêntese faltando, await sem async, documet, getElementByID, innerHtml...).
+- Erros que só acontecem ao rodar também aparecem na lista, com a linha.
+
+Atalhos:
+- reservas-vilson.html#solucao  -> tudo pronto (para conferir ou projetar)
+- reservas-vilson.html#app      -> só o app (celular)
+
+DEPOIS DO EVENTO
+- No Firebase, aba Regras, troque ".read": true e ".write": true por false e publique.

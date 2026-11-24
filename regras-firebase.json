@@ -1,0 +1,19 @@
+{
+  "rules": {
+    "arena-vilson": {
+      ".read": true,
+      ".write": true,
+      "reservas": {
+        "$id": {
+          ".validate": "newData.hasChildren(['quadra', 'data', 'horario', 'nome'])",
+          "quadra":   { ".validate": "newData.isString() && newData.val().length <= 20" },
+          "data":     { ".validate": "newData.isString() && newData.val().length <= 10" },
+          "horario":  { ".validate": "newData.isString() && newData.val().length <= 8" },
+          "nome":     { ".validate": "newData.isString() && newData.val().length <= 30" },
+          "criadaEm": { ".validate": "newData.isNumber()" },
+          "$outro":   { ".validate": false }
+        }
+      }
+    }
+  }
+}

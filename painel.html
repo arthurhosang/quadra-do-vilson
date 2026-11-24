@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel do Banco · Arena do Vilson</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; background: #0d1117; color: #e6edf3; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 16px 24px; background: #161b22; border-bottom: 1px solid #30363d; }
+  h1 { margin: 0; font-size: 24px; }
+  #status { font-size: 13px; color: #8b949e; }
+  .config { display: flex; gap: 8px; flex: 1; min-width: 320px; max-width: 640px; }
+  .config input { flex: 1; padding: 8px 10px; font-family: Consolas, monospace; font-size: 13px; background: #0d1117; color: #e6edf3; border: 1px solid #30363d; border-radius: 6px; }
+  button { border: none; padding: 9px 14px; border-radius: 6px; font-size: 14px; cursor: pointer; }
+  #salvar { background: #1f6feb; color: #fff; }
+  #limpar { background: #b71c1c; color: #fff; }
+
+  .numeros { display: flex; gap: 16px; padding: 16px 24px 0; flex-wrap: wrap; }
+  .num { flex: 1; min-width: 160px; background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 14px 18px; }
+  .num span { color: #8b949e; font-size: 14px; }
+  .num b { display: block; font-size: 40px; }
+  .num.alerta b { color: #ff7043; }
+
+  #dias { display: flex; gap: 8px; padding: 16px 24px 0; flex-wrap: wrap; }
+  .dia { padding: 8px 14px; border-radius: 20px; border: 2px solid #30363d; background: #161b22; color: #e6edf3; font-size: 15px; }
+  .dia.ativo { border-color: #fdd835; color: #fdd835; font-weight: bold; }
+  .dia small { color: #ff7043; margin-left: 4px; }
+  .grade { display: grid; grid-template-columns: 1fr 1fr 1.1fr; gap: 16px; padding: 16px 24px 24px; }
+  .bloco { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 14px 16px; min-height: 300px; }
+  .bloco h2 { margin: 0 0 10px; font-size: 18px; }
+  .slot { display: flex; gap: 12px; padding: 8px 10px; border-radius: 6px; margin-bottom: 6px; background: #0d1117; font-size: 17px; }
+  .slot .h { font-weight: bold; width: 56px; font-family: Consolas, monospace; }
+  .slot.livre { color: #6e7681; }
+  .slot.ocupado { border-left: 5px solid #43a047; }
+  .slot.conflito { border-left: 5px solid #e53935; background: #3b1414; }
+
+  #log { font-family: Consolas, monospace; font-size: 14px; max-height: 520px; overflow: auto; }
+  #log div { padding: 4px 0; border-bottom: 1px solid #21262d; }
+  #log .hora { color: #6e7681; }
+  #log .conf { color: #ff7043; }
+
+  .lixo { background: none; border: none; color: #6e7681; cursor: pointer; padding: 0 4px; font-size: 14px; margin-left: auto; }
+  .lixo:hover { color: #ff7043; }
+  .slot .nomes { flex: 1; }
+  .slot .nome { margin-right: 6px; }
+  .num.mod b { color: #ba68c8; }
+  .num[hidden] { display: none; }
+
+  #btn-mod { background: #3a434e; color: #e6edf3; }
+  #moderacao { display: none; margin: 16px 24px 0; background: #161b22; border: 1px solid #6a1b9a; border-radius: 10px; padding: 14px 16px; }
+  #moderacao.aberta { display: block; }
+  #moderacao h3 { margin: 0 0 8px; font-size: 16px; }
+  #moderacao textarea { width: 100%; height: 60px; background: #0d1117; color: #e6edf3; border: 1px solid #30363d; border-radius: 6px; padding: 8px; font-family: Consolas, monospace; font-size: 13px; }
+  #moderacao label { display: block; margin: 8px 0; }
+  #moderacao small { color: #8b949e; }
+  #teste-nome { padding: 6px 8px; background: #0d1117; color: #e6edf3; border: 1px solid #30363d; border-radius: 6px; }
+
+  @media (max-width: 1000px) { .grade { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>☁️ Banco de dados da Arena do Vilson</h1>
+    <span id="status">cole a URL do Firebase ao lado</span>
+  </div>
+  <div class="config">
+    <input id="url" placeholder="https://SEU-PROJETO-default-rtdb.firebaseio.com/arena-vilson" spellcheck="false">
+    <button id="salvar">Conectar</button>
+  </div>
+  <button id="btn-mod">🙊 Moderação</button>
+  <button id="limpar">🗑️ Apagar banco (nova turma)</button>
+</header>
+
+<div id="moderacao">
+  <h3>🙊 Moderação de nomes</h3>
+  <label><input type="checkbox" id="auto-apagar" checked> Apagar do banco automaticamente os nomes bloqueados
+    <small>(desmarcado: só esconde no painel; os alunos ainda veem no app)</small></label>
+  <label>Palavras extras para bloquear, separadas por vírgula (apelidos, nomes de professores, gírias locais…):
+    <textarea id="extras" spellcheck="false" placeholder="ex.: fulano, apelido do colega"></textarea></label>
+  <label>Testar um nome: <input id="teste-nome" placeholder="digite aqui"> <b id="teste-res"></b></label>
+  <small>A lista padrão já cobre os palavrões e ofensas mais comuns, inclusive escritos com números (p0rr4), letras repetidas (porraaa) ou separados (c a r a l h o). Clique em 🙊 Moderação de novo para fechar.</small>
+</div>
+
+<div class="numeros">
+  <div class="num"><span>📋 Reservas no banco (todos os dias)</span><b id="n-reservas">0</b></div>
+  <div class="num"><span>🙋 Pessoas que já reservaram</span><b id="n-nomes">0</b></div>
+  <div class="num" id="caixa-conflitos"><span>⚠️ Conflitos (horário reservado 2x)</span><b id="n-conflitos">0</b></div>
+  <div class="num mod" id="caixa-bloqueados" hidden><span>🙊 Nomes bloqueados</span><b id="n-bloqueados">0</b></div>
+</div>
+
+<div id="dias"></div>
+
+<div class="grade">
+  <div class="bloco"><h2>⚽ Campo de futebol</h2><div id="q-futebol"></div></div>
+  <div class="bloco"><h2>🏐 Vôlei de praia</h2><div id="q-volei"></div></div>
+  <div class="bloco"><h2>📡 Chegando no banco</h2><div id="log"></div></div>
+</div>
+
+<script>
+  var HORARIOS_PADRAO = ["17:00", "18:00", "19:00", "20:00", "21:00", "22:00"];
+  var CHAVE = "painel-vilson-url", CHAVE_EXTRAS = "painel-vilson-extras", CHAVE_AUTO = "painel-vilson-auto";
+
+  // ---------- lista de bloqueio ----------
+  var BLOQUEADAS = [
+    "porra", "caralho", "krl", "crl", "prr", "merda", "bosta", "puta", "puto", "putaria", "putinha",
+    "foda", "fuder", "foder", "fodase", "fodido", "fdp", "pqp", "vsf", "tnc", "tmnc", "vtnc", "filhodaputa",
+    "cu", "cuzao", "cuzinho", "buceta", "boceta", "xota", "xoxota", "xereca", "piroca", "pica", "rola", "pau",
+    "punheta", "siririca", "broxa", "brocha", "gozar", "sexo", "transar", "chupa", "mamada",
+    "viado", "veado", "bicha", "baitola", "sapatao", "traveco",
+    "otario", "otaria", "arrombado", "arrombada", "babaca", "imbecil", "retardado", "retardada", "mongol",
+    "corno", "corna", "vagabundo", "vagabunda", "piranha", "vadia", "rapariga", "safado", "safada",
+    "desgraca", "desgracado", "desgracada", "escroto", "escrota", "lixo", "nojento", "nojenta",
+    "macaco", "macaca", "nazi", "nazista", "hitler"
+  ];
+  // palavras curtas (cu, pau, rola) só bloqueiam como palavra isolada: "Paulo" e "Rolando" passam.
+
+  function normalizar(t) {
+    return String(t || "").toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/0/g, "o").replace(/1/g, "i").replace(/3/g, "e").replace(/4/g, "a")
+      .replace(/5/g, "s").replace(/7/g, "t").replace(/@/g, "a").replace(/\$/g, "s")
+      .replace(/(.)\1+/g, "$1");               // porraaa → pora (a lista passa pelo mesmo processo)
+  }
+
+  var lista = [];
+  function montarLista() {
+    var extras = document.getElementById("extras").value.split(/[,;\n]+/);
+    lista = BLOQUEADAS.concat(extras)
+      .map(function (w) { return normalizar(w).replace(/[^a-z]/g, ""); })
+      .filter(function (w) { return w.length >= 2; });
+  }
+
+  var SUFIXOS = ["s", "es", "o", "ao", "oes", "ona", "inho", "inha", "zinho", "zinha"];
+
+  function proibido(nome) {
+    var n = normalizar(nome);
+    var palavras = n.split(/[^a-z]+/).filter(Boolean);
+    var junto = palavras.join("");
+    // letras soltas juntas: "c a r a l h o" → caralho
+    var soltas = (n.match(/(?:^|[^a-z])([a-z](?:[^a-z]+[a-z])+)(?=[^a-z]|$)/g) || []).map(function (x) { return x.replace(/[^a-z]/g, ""); });
+    for (var i = 0; i < lista.length; i++) {
+      var w = lista[i];
+      for (var j = 0; j < palavras.length; j++) {
+        var p = palavras[j];
+        if (p === w) return true;
+        if (w.length >= 4 && p.indexOf(w) === 0 && SUFIXOS.indexOf(p.slice(w.length)) !== -1) return true;   // putas, otarios
+        if (w.length >= 5 && /[aeo]$/.test(w) && p.indexOf(w.slice(0, -1)) === 0 &&
+            ["inho", "inha", "ao", "ona", "oes"].indexOf(p.slice(w.length - 1)) !== -1) return true;     // bostinha, otarião
+      }
+      if (w.length >= 6 && junto.indexOf(w) !== -1) return true;                          // foda-se, filho da puta
+      for (var k = 0; k < soltas.length; k++) if (soltas[k].length >= 3 && soltas[k].indexOf(w) !== -1 && w.length >= 3) return true;
+    }
+    return false;
+  }
+
+  // ---------- utilitários ----------
+  var campo = document.getElementById("url");
+  var url = "";
+  try { url = localStorage.getItem(CHAVE) || ""; } catch (e) {}
+  if (!url) url = "https://tonezacascaes-efe85-default-rtdb.firebaseio.com/arena-vilson";
+  campo.value = url;
+  try {
+    document.getElementById("extras").value = localStorage.getItem(CHAVE_EXTRAS) || "";
+    document.getElementById("auto-apagar").checked = localStorage.getItem(CHAVE_AUTO) !== "nao";
+  } catch (e) {}
+  montarLista();
+
+  function base() { return url.replace(/\/+$/, ""); }
+
+  function esc(t) {
+    return String(t == null ? "" : t).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function proximosDias() {
+    var semana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"], dias = [];
+    for (var i = 0; i < 7; i++) {
+      var d = new Date(); d.setDate(d.getDate() + i);
+      var id = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      var nome = i === 0 ? "Hoje" : i === 1 ? "Amanhã" : semana[d.getDay()] + " " + d.getDate() + "/" + (d.getMonth() + 1);
+      dias.push({ id: id, nome: nome });
+    }
+    return dias;
+  }
+  function nomeDoDia(id) {
+    var d = proximosDias().filter(function (x) { return x.id === id; })[0];
+    return d ? d.nome : id;
+  }
+
+  var dataAtual = proximosDias()[0].id;
+  var ultimas = [];
+  var bloqueados = {};      // id -> true (contagem da sessão)
+  var apagando = {};
+
+  function apagar(id) {
+    if (apagando[id]) return;
+    apagando[id] = true;
+    fetch(base() + "/reservas/" + encodeURIComponent(id) + ".json", { method: "DELETE" })
+      .then(function () { delete apagando[id]; atualizar(); })
+      .catch(function () { delete apagando[id]; });
+  }
+
+  function nomeHTML(r) {
+    var texto = r.oculto ? "🙊 ••••" : esc(r.nome);
+    return '<span class="nome">' + texto + '<button class="lixo" data-id="' + esc(r.id) + '" title="Apagar esta reserva">🗑️</button></span>';
+  }
+
+  // ---------- desenho ----------
+  function desenharDias(reservas) {
+    var html = "";
+    proximosDias().forEach(function (d) {
+      var n = reservas.filter(function (r) { return r.data === d.id; }).length;
+      html += '<button class="dia' + (d.id === dataAtual ? " ativo" : "") + '" data-dia="' + d.id + '">' + d.nome +
+        (n ? "<small>" + n + "</small>" : "") + "</button>";
+    });
+    document.getElementById("dias").innerHTML = html;
+  }
+
+  function desenharQuadra(id, reservas) {
+    var minhas = reservas.filter(function (r) { return r.quadra === id && r.data === dataAtual; });
+    var horarios = HORARIOS_PADRAO.slice();
+    minhas.forEach(function (r) { if (horarios.indexOf(r.horario) === -1) horarios.push(r.horario); });
+    horarios.sort();
+    var conflitos = 0, html = "";
+    horarios.forEach(function (h) {
+      var donos = minhas.filter(function (r) { return r.horario === h; });
+      var classe = donos.length === 0 ? "livre" : donos.length === 1 ? "ocupado" : "conflito";
+      if (donos.length > 1) conflitos++;
+      var texto = donos.length === 0 ? "livre" : (donos.length > 1 ? "⚠️ " : "") + donos.map(nomeHTML).join(" × ");
+      html += '<div class="slot ' + classe + '"><span class="h">' + esc(h) + '</span><span class="nomes">' + texto + "</span></div>";
+    });
+    document.getElementById("q-" + id).innerHTML = html;
+    return conflitos;
+  }
+
+  function desenharTudo(reservas) {
+    desenharDias(reservas);
+    document.getElementById("n-reservas").textContent = reservas.length;
+    var nomes = {};
+    reservas.forEach(function (r) { if (!r.oculto) nomes[r.nome] = 1; });
+    document.getElementById("n-nomes").textContent = Object.keys(nomes).length;
+    var c = desenharQuadra("futebol", reservas) + desenharQuadra("volei", reservas);
+    document.getElementById("n-conflitos").textContent = c;
+    document.getElementById("caixa-conflitos").className = "num" + (c > 0 ? " alerta" : "");
+    var nb = Object.keys(bloqueados).length;
+    document.getElementById("n-bloqueados").textContent = nb;
+    document.getElementById("caixa-bloqueados").hidden = nb === 0;
+
+    var vistos = {};
+    var ordenadas = reservas.slice().sort(function (a, b) { return (a.criadaEm || 0) - (b.criadaEm || 0); });
+    var linhas = ordenadas.map(function (r) {
+      var chave = r.quadra + "|" + r.data + "|" + r.horario, conf = vistos[chave];
+      vistos[chave] = 1;
+      var hora = r.criadaEm ? new Date(r.criadaEm).toLocaleTimeString("pt-BR") : "--:--:--";
+      return '<div><span class="hora">' + hora + "</span> 📝 " + nomeHTML(r) + "→ " + esc(r.quadra) + " · " + esc(nomeDoDia(r.data)) + " " + esc(r.horario) +
+        (conf ? ' <span class="conf">⚠️ CONFLITO</span>' : "") + "</div>";
+    });
+    document.getElementById("log").innerHTML = linhas.reverse().join("") || '<div class="hora">nenhuma reserva ainda</div>';
+  }
+
+  // ---------- busca no banco + moderação ----------
+  function atualizar() {
+    if (!url) return;
+    fetch(base() + "/reservas.json", { cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (dados) {
+        var auto = document.getElementById("auto-apagar").checked;
+        var todas = Object.keys(dados || {}).map(function (k) {
+          var r = dados[k] || {};
+          return { id: k, quadra: r.quadra, data: r.data, horario: r.horario, nome: r.nome, criadaEm: r.criadaEm };
+        });
+        ultimas = [];
+        todas.forEach(function (r) {
+          if (proibido(r.nome)) {
+            bloqueados[r.id] = true;
+            if (auto) { apagar(r.id); return; }   // some do banco → some da tela de todos
+            r.oculto = true;
+          }
+          ultimas.push(r);
+        });
+        document.getElementById("status").textContent = "● online · atualizado " + new Date().toLocaleTimeString("pt-BR");
+        desenharTudo(ultimas);
+      })
+      .catch(function (e) { document.getElementById("status").textContent = "● sem conexão com o banco (" + e.message + ")"; });
+  }
+
+  // ---------- eventos ----------
+  document.addEventListener("click", function (e) {
+    var lixo = e.target.closest(".lixo");
+    if (lixo) { apagar(lixo.getAttribute("data-id")); return; }
+    var dia = e.target.closest(".dia");
+    if (dia) { dataAtual = dia.getAttribute("data-dia"); desenharTudo(ultimas); }
+  });
+
+  document.getElementById("salvar").onclick = function () {
+    url = campo.value.trim();
+    try { localStorage.setItem(CHAVE, url); } catch (e) {}
+    atualizar();
+  };
+
+  document.getElementById("btn-mod").onclick = function () {
+    document.getElementById("moderacao").classList.toggle("aberta");
+  };
+  document.getElementById("extras").addEventListener("input", function () {
+    try { localStorage.setItem(CHAVE_EXTRAS, this.value); } catch (e) {}
+    montarLista();
+    testar();
+  });
+  document.getElementById("auto-apagar").addEventListener("change", function () {
+    try { localStorage.setItem(CHAVE_AUTO, this.checked ? "sim" : "nao"); } catch (e) {}
+    atualizar();
+  });
+  function testar() {
+    var v = document.getElementById("teste-nome").value;
+    document.getElementById("teste-res").textContent = v ? (proibido(v) ? "🚫 bloqueado" : "✅ liberado") : "";
+  }
+  document.getElementById("teste-nome").addEventListener("input", testar);
+
+  document.getElementById("limpar").onclick = function () {
+    if (!url || !confirm("Apagar TODAS as reservas do banco?")) return;
+    fetch(base() + "/reservas.json", { method: "DELETE" }).then(function () { bloqueados = {}; atualizar(); });
+  };
+
+  atualizar();
+  setInterval(atualizar, 1500);
+</script>
+</body>
+</html>
